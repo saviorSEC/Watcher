@@ -1,0 +1,74 @@
+# Watcher — Standard Testing Protocol
+# Tests whether an adversarial pattern prevents face detection.
+
+protocol:
+  name: "standard"
+  version: "1.0"
+  description: >
+    Standard detection-evasion test. Measures detection rate with and
+    without adversarial pattern across multiple distances and angles.
+
+phases:
+  - name: "baseline"
+    description: "Bare face, no pattern — establishes control detection rate"
+    trials_per_variable: 50
+
+  - name: "pattern_applied"
+    description: "Subject wearing/applying adversarial pattern"
+    trials_per_variable: 50
+
+variables:
+  distance_m:
+    - 0.5
+    - 1.0
+    - 2.0
+    - 5.0
+
+  angle_yaw:
+    - 0     # Frontal
+    - 15    # Slight turn
+    - 30    # Moderate turn
+    - 45    # Half profile
+
+  lighting_lux:
+    - 200   # Indoor ambient
+    - 500   # Office lighting
+    - 1000  # Bright/sunlit
+
+  expression:
+    - neutral
+    - smile
+
+default_parameters:
+  trials: 50
+  camera_modes: ["manual_exposure"]
+  require_landmarks: false
+
+detectors:
+  - yolo11n
+  - yolo11s
+  - mtcnn
+  - retinaface
+
+metrics:
+  primary:
+    - detection_rate
+    - mean_confidence
+    - evasion_rate
+  secondary:
+    - bbox_jitter
+    - inference_time_ms
+
+pass_conditions:
+  - metric: evasion_rate
+    threshold: 0.80
+    operator: "gte"
+    label: "PASS"
+  - metric: evasion_rate
+    threshold: 0.50
+    operator: "gte"
+    label: "PARTIAL"
+  - metric: evasion_rate
+    operator: "lt"
+    threshold: 0.50
+    label: "FAIL"
