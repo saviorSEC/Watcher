@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/card_dark"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- File info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_result_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="test_name.json"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tv_result_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="JSON"
+                    android:textSize="12sp"
+                    android:textColor="@color/accent"
+                    android:background="@color/secondary"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_result_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2024-01-01 12:00"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_background" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" · "
+                    android:textSize="12sp"
+                    android:textColor="@color/on_background" />
+
+                <TextView
+                    android:id="@+id/tv_result_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1.2 KB"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_background" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Action buttons -->
+        <ImageButton
+            android:id="@+id/btn_share_result"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:background="@null"
+            android:contentDescription="Share"
+            android:scaleType="center"
+            android:layout_gravity="center_vertical"
+            app:tint="@color/on_background" />
+
+        <ImageButton
+            android:id="@+id/btn_delete_result"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:background="@null"
+            android:contentDescription="Delete"
+            android:scaleType="center"
+            android:layout_gravity="center_vertical"
+            app:tint="@color/accent" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

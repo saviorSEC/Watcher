@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path name="watcher_results" path="Watcher/" />
+    <external-files-path name="watcher_internal" path="Watcher/" />
+    <cache-path name="watcher_cache" path="Watcher/" />
+</paths>

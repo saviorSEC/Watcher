@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/background_dark">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👁️ Watcher"
+            android:textSize="36sp"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/on_background"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adversarial Pattern Field Testing"
+            android:textSize="14sp"
+            android:textColor="@color/on_background"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <Button
+        android:id="@+id/btn_quick_scan"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="@string/quick_scan"
+        android:textSize="16sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/secondary"
+        android:textColor="@color/white"
+        app:cornerRadius="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btn_start_test"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="@string/start_test"
+        android:textSize="16sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/accent"
+        android:textColor="@color/white"
+        app:cornerRadius="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btn_view_results"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="@string/view_results"
+        android:textSize="16sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/card_dark"
+        android:textColor="@color/on_surface"
+        app:cornerRadius="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btn_settings"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="@string/settings"
+        android:textSize="16sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/card_dark"
+        android:textColor="@color/on_surface"
+        app:cornerRadius="12dp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Recent Results Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recent Results"
+        android:textSize="16sp"
+        android:textColor="@color/on_surface"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recent_results_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

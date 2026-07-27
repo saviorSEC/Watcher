@@ -1,193 +1,178 @@
-# Watcher 👁️
+# Watcher 👁️ — Android App
 
-> **Adversarial Pattern Field Testing Framework — Validate anti-AI facial recognition garments in real-world conditions.**
+> **Adversarial pattern field testing — right on your phone.**
+>
+> Open the app, point the camera at a shirt, and see if it evades ML Kit face detection in real-time.
 
-Watcher is the testing counterpart to [NoRecognition](https://github.com/hevnsnt/norecognition). While NoRecognition **generates** adversarial patterns, Watcher **validates them** — running controlled field tests against real facial recognition pipelines on Android phones, IP cameras, and webcams to measure how well those patterns actually work.
+Watcher is the testing counterpart to [NoRecognition](https://github.com/hevnsnt/norecognition). While NoRecognition **generates** adversarial patterns in simulation, Watcher is an **Android app** that validates those patterns against real on-device facial recognition.
 
----
-
-## Philosophy
-
-NoRecognition finds patterns that confuse AI. Watcher proves they work in the wild.
-
-| System | Role |
-|--------|------|
-| **NoRecognition** (Bill Swearingen) | Pattern generation fuzzer — evolutionary adversarial pattern design |
-| **DarkCogswell / Sandbox** | Pattern validation against 11 simulated detectors |
-| **Watcher** (this project) | **Real-world field testing** — mobile, camera, and pipeline validation |
-
-Watcher bridges the gap between digital simulation and physical reality. A pattern that scores 90% in simulation may fail in the wild due to lighting, fabric texture, camera angle, or compression artifacts. Watcher catches that.
+**No laptop needed.** Everything runs on your phone — camera, detection, metrics, report export.
 
 ---
 
 ## What It Does
 
-- ✅ **Real-time facial detection** — Runs YOLO, MTCNN, RetinaFace, FaceNet, and ArcFace against live camera feeds
-- ✅ **Controlled field testing** — Test shirts/patterns against a known pipeline with repeatable protocols
-- ✅ **Android camera integration** — Use any Android phone as a test camera via ADB/IP Webcam
-- ✅ **IP camera support** — Test against CCTV/doorbell cameras (RTSP/ONVIF)
-- ✅ **Metric collection** — Detection rate, confidence scores, bounding box stability, identification rate
-- ✅ **Batched testing** — Run N trials per pattern/persona/angle/lighting condition
-- ✅ **Result visualization** — Confusion matrices, ROC curves, detection heatmaps
+| Feature | How |
+|---------|-----|
+| **Quick Scan** | Real-time face detection with live bounding boxes and confidence overlay |
+| **Structured Test** | Runs baseline (bare face) + pattern test (with shirt), compares evasion rate |
+| **Pattern Import** | Load any adversarial pattern image from your gallery |
+| **Multiple Detectors** | ML Kit Face Detection (fast mode + accurate mode), FaceNet embedder (optional) |
+| **Export Reports** | Saves HTML reports with evasion rate, grade, and per-detector metrics to your Documents |
+| **Front/Back Camera** | Flip between selfie cam (testing your own shirt) and back cam (testing others) |
 
 ---
 
-## Repository Structure
+## How to Install
 
-```
-watcher/
-├── app/                      # Core testing engine
-│   ├── watcher.py            # Main facial recognition testing app
-│   ├── detectors/            # Facial detection backends
-│   │   ├── yolo_detector.py
-│   │   ├── mtcnn_detector.py
-│   │   ├── retinaface_detector.py
-│   │   └── facenet_recognizer.py
-│   └── pipeline.py           # Recognition pipeline orchestrator
-├── camera_pipeline/          # Camera integration
-│   ├── android_capture.py    # Android phone as camera (ADB)
-│   ├── ip_camera.py          # RTSP/ONVIF camera support
-│   └── webcam_capture.py     # Local webcam
-├── datasets/                 # Test subject management
-│   ├── persona_manager.py    # Persona registry & ground truth
-│   └── personas/             # Reference face images
-├── docs/                     # Documentation
-│   ├── methodology.md        # Full testing methodology
-│   ├── testing_protocol.md   # Step-by-step test protocols
-│   └── hardware_setup.md     # Camera & phone setup guide
-├── results/                  # Test results (gitignored raw data)
-├── scripts/                  # Utility scripts
-│   ├── run_test.py           # Single/multi test runner
-│   └── evaluate_results.py   # Result analysis & visualization
-├── test_protocols/           # Protocol definitions
-│   ├── standard_protocol.yaml
-│   └── adversarial_protocol.yaml
-├── requirements.txt
-└── .gitignore
-```
+### Quick Install (APK)
+1. Download the APK from the [Releases page](https://github.com/saviorSEC/Watcher/releases)
+2. On your phone: Settings → Security → Install from Unknown Sources → enable
+3. Open the APK → Install → Open
 
----
-
-## Quick Start
-
+### Build from Source
 ```bash
 git clone https://github.com/saviorSEC/Watcher.git
 cd Watcher
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+./gradlew assembleDebug
+# APK at: app/build/outputs/apk/debug/app-debug.apk
+```
 
-# List connected cameras
-python scripts/run_test.py --list-cameras
+**Requires:** Android Studio (or Gradle 8.5+), Android SDK 26+
 
-# Run a baseline test (no pattern)
-python scripts/run_test.py --persona alice --camera 0 --output results/baseline/
+---
 
-# Run with adversarial pattern
-python scripts/run_test.py --persona alice --pattern patterns/my_shirt.png --camera android --output results/test_01/
+## How to Test Your Shirt
+
+### 1. Save your adversarial pattern to your phone
+Export a pattern from NoRecognition (or download from DarkCogswell sandbox) and save it as an image on your phone.
+
+### 2. Open Watcher → Start Test
+```
+Persona Name: [your_name]
+Trials: 50
+Select Pattern: [choose shirt pattern image]
+```
+
+### 3. Baseline Phase
+App runs 50 trials on your bare face. Stand still, look at the camera.
+
+### 4. Put on the shirt
+The app shows a dialog — that's your cue to put on the adversarial shirt.
+
+### 5. Pattern Phase
+App runs another 50 trials with the pattern overlaid/detected on your face.
+
+### 6. Get Your Grade
+The app shows:
+```
+Grade: A
+Evasion Rate: 87.3%
+Baseline DR: 98.2%
+Pattern DR: 12.4%
+Confidence Suppression: 76.1%
+```
+
+Reports are saved to `Documents/Watcher/` on your phone.
+
+---
+
+## Architecture
+
+```
+Watcher Android App
+├── CameraX                   ← Camera preview + frame capture
+├── ML Kit Face Detection      ← On-device face detection (Google Play Services)
+├── FaceNet TFLite (optional)  ← Face embedding extraction for recognition testing
+├── Pattern Overlay Engine     ← Applies adversarial patterns via GPU compositing
+├── Test Session Manager       ← Controls trial flow, metrics collection
+├── Metric Aggregator          ← Computes detection rate, confidence, evasion rate
+└── Report Exporter            ← Saves HTML/JSON results to Documents/
+```
+
+### Detection Pipeline
+```
+Camera Frame (YUV) → Bitmap → ML Kit Face Detection → Bounding Box + Landmarks
+                                 ↓
+                          Face Detected? → Yes → Record confidence, count landmarks
+                                 ↓
+                          No → Record "no face", increment trial counter
 ```
 
 ---
 
-## What You Need
+## The FaceNet Model
 
-### Hardware
-- **Android phone** (any with ADB debugging or IP Webcam, for pattern testing on real mobile cameras)
-- **USB webcam** (for controlled lab testing)
-- **IP camera** (optional, for testing against surveillance-style hardware)
-- **Printer** (to print adversarial patterns on fabric or paper)
+The app **fully works without it** — ML Kit handles detection on its own. FaceNet adds recognition-level testing (embedding distance, identity confusion).
 
-### Software
-- Python 3.10+
-- OpenCV
-- PyTorch (for detector models)
-- ADB (Android Debug Bridge)
-- CUDA-capable GPU recommended for real-time testing
-
----
-
-## Testing Methodology (TL;DR)
-
-1. **Establish baseline** — Run detection on bare face, collect metrics
-2. **Apply pattern** — Subject wears the adversarial shirt/pattern
-3. **Run trials** — Vary angle, distance, lighting per protocol
-4. **Collect metrics** — Detection rate, confidence, identification
-5. **Compare** — Calculate evasion rate vs baseline
-6. **Report** — Generate pass/fail per detector model
-
-Full methodology: [`docs/methodology.md`](docs/methodology.md)
-
----
-
-## Integration with NoRecognition
-
-Watcher slots into the NoRecognition pipeline at the validation stage:
-
+To enable embeddings, download a FaceNet TFLite model and place it at:
 ```
-NoRecognition Fuzzer → Generates Pattern → Watcher Validates on Real Hardware → Results Feed Back → Next Epoch
+app/src/main/assets/facenet.tflite
 ```
 
-Import patterns from NoRecognition exports:
-```bash
-python scripts/run_test.py \
-  --persona alice \
-  --pattern /path/to/norecognition/exports/pattern_epoch_42.png \
-  --detectors yolo11n,retinaface,facenet \
-  --protocol adversarial
+Recommended sources:
+- [TFLite FaceNet](https://github.com/serengil/deepface) — Convert the Keras model
+- [tflite-face-recognition](https://github.com/thanhtbt/tflite-face-recognition) — Pre-converted models
+
+---
+
+## Grading System
+
+| Grade | Evasion | Meaning |
+|-------|---------|---------|
+| **S** | > 95% | Model-blind — holy grail |
+| **A** | > 80% | Strong — the shirt works |
+| **B** | > 60% | Moderate — partial effect |
+| **C** | > 40% | Weak |
+| **D** | > 20% | Minimal |
+| **F** | < 20% | Ineffective |
+
+---
+
+## Results on Your Phone
+
+Exported reports go to:
+```
+Internal Storage/Documents/Watcher/
+├── watcher_baseline_alice_20260726_143000.json
+├── watcher_test_alice_20260726_143500.json
+├── comparison_abc123_20260726_143500.json
+└── report_abc123_20260726_143500.html   ← Open this in Chrome
 ```
 
----
-
-## Detector Models Supported
-
-| Model | Type | Purpose |
-|-------|------|---------|
-| YOLO11n / YOLOv8 | Detection | Real-time face detection (Ultralytics) |
-| MTCNN | Detection | Lightweight face detection |
-| RetinaFace | Detection | High-accuracy face detection |
-| FaceNet | Recognition | Face embedding & identification |
-| ArcFace | Recognition | Accurate face recognition |
-| MediaPipe | Detection | Mobile-optimized detection |
-| OpenCV Haar | Detection | Legacy baseline detector |
+Open the HTML report directly in Chrome for full metrics with grading tables.
 
 ---
 
-## Example: Testing a Shirt
+## NoRecognition Integration Workflow
 
-```bash
-# 1. Capture baseline (no shirt)
-python scripts/run_test.py --persona alice --camera android --trials 50 --tag baseline
-
-# 2. Test with adversarial shirt
-python scripts/run_test.py --persona alice --camera android --pattern /path/to/shirt_pattern.png --trials 50 --tag shirt_v1
-
-# 3. Compare results
-python scripts/evaluate_results.py --baseline results/baseline --test results/shirt_v1 \
-  --output results/report_shirt_v1.html
+```
+[NoRecognition Fuzzer]
+  ↓ generates pattern PNG
+[Save to phone gallery]
+  ↓
+[Watcher Android App]
+  Load pattern → Run baseline → Wear shirt → Run test → Get grade
+  ↓
+[Export report]
+  ↓
+[Feed results back into NoRecognition fuzzer]
+  Next epoch learns from real-world validation
 ```
 
 ---
 
-## Contributing
+## Requirements
 
-This project is for research and educational purposes — testing adversarial patterns against facial recognition systems in authorized environments. PRs welcome for:
-
-- New detector model integrations
-- Camera platform backends
-- Testing protocol definitions
-- Result analysis improvements
-
----
-
-## Related Projects
-
-- **[NoRecognition](https://github.com/hevnsnt/norecognition)** — The pattern generator (Bill Swearingen/SecKC)
-- **[DarkCogswell Sandbox](https://sandbox.norecognition.org)** — Digital pattern validation dashboard
-- **[Ultralytics YOLO](https://www.ultralytics.com)** — Detection model used in testing
+- **Android 8.0+** (API 26)
+- **Google Play Services** (for ML Kit — pre-installed on all Google-certified devices)
+- **Camera** (front or back)
+- **Internet** (only for first ML Kit model download, works offline after)
 
 ---
 
 ## License
 
-Research & educational use. Subject to applicable laws regarding facial recognition and biometric testing.
+Research & educational use. Built for testing adversarial patterns in authorized environments against on-device facial recognition.
 
-**Watcher** — *Validate before you trust the pattern.*
+**Watcher** — *Your phone. Your patterns. Your data. No cloud.*

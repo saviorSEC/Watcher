@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <!-- Camera Preview (full background) -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/test_camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
+    <!-- Top bar with back and flip -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="@drawable/round_button_bg"
+            android:contentDescription="Back"
+            android:scaleType="center"
+            app:tint="@color/white" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tv_test_phase"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CONFIG"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/accent"
+            android:layout_gravity="center"
+            android:padding="8dp" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/btn_flip_camera"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:background="@drawable/round_button_bg"
+            android:contentDescription="Flip"
+            android:scaleType="center"
+            app:tint="@color/white" />
+    </LinearLayout>
+
+    <!-- Config Panel (shown before test starts) -->
+    <LinearLayout
+        android:id="@+id/layout_config"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@color/surface_dark">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test Configuration"
+            android:textSize="20sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Persona Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Persona Name"
+            android:layout_marginBottom="8dp"
+            app:boxStrokeColor="@color/accent"
+            app:hintTextColor="@color/accent">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_persona_name"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="default"
+                android:textColor="@color/white" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Trial Count -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Trials (e.g., 50)"
+            android:layout_marginBottom="12dp"
+            app:boxStrokeColor="@color/accent"
+            app:hintTextColor="@color/accent">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_trial_count"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="50"
+                android:inputType="number"
+                android:textColor="@color/white" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Pattern Selection -->
+        <Button
+            android:id="@+id/btn_select_pattern"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Select Pattern Image"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/secondary"
+            android:textColor="@color/white"
+            app:cornerRadius="8dp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_pattern_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/status_green"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Start Button -->
+        <Button
+            android:id="@+id/btn_test_action"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/start_test"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/accent"
+            android:textColor="@color/white"
+            app:cornerRadius="12dp" />
+    </LinearLayout>
+
+    <!-- Test Running Panel (shown during test) -->
+    <LinearLayout
+        android:id="@+id/layout_test_running"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@color/surface_dark"
+        android:visibility="gone">
+
+        <!-- Trial Count and Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="4"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tv_trial_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Trial 0/50"
+                android:textSize="14sp"
+                android:textColor="@color/on_surface" />
+
+            <TextView
+                android:id="@+id/tv_test_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="WAITING"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/status_yellow"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tv_test_face_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Faces: —"
+                android:textSize="14sp"
+                android:textColor="@color/on_surface"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tv_test_confidence"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Conf: —"
+                android:textSize="14sp"
+                android:textColor="@color/on_surface"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/test_progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="4dp"
+            android:max="100"
+            android:progress="0"
+            android:progressTint="@color/accent" />
+
+        <TextView
+            android:id="@+id/tv_test_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="12sp"
+            android:textColor="@color/on_background"
+            android:gravity="center" />
+    </LinearLayout>
+
+</FrameLayout>

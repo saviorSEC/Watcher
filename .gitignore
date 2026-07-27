@@ -1,44 +1,28 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
 
-# Virtual environment
+# App build output
+app/build/
+
+# Local keystore
+*.keystore
+*.jks
+
+# Python virtual envs (supporting scripts)
 venv/
 .env/
 .venv/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Results (large, regenerable)
-results/
-*.json
-*.html
-*.csv
-
-# Model weights (downloaded at runtime)
-*.pt
-*.pth
-*.bin
-
-# Datasets (persona images are user data)
-datasets/personas/*.jpg
-datasets/personas/*.png
-datasets/personas/*/
-
-# Camera configs (may contain credentials)
-camera_pipeline/credentials.conf
 
 # OS
 .DS_Store

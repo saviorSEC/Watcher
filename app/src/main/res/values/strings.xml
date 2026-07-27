@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Watcher</string>
+
+    <!-- Main Screen -->
+    <string name="start_test">Start Test</string>
+    <string name="quick_scan">Quick Scan</string>
+    <string name="view_results">View Results</string>
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+
+    <!-- Test Screen -->
+    <string name="test_in_progress">Test In Progress</string>
+    <string name="trial_count">Trial</string>
+    <string name="detection_status">Detection Status</string>
+    <string name="faces_detected">Faces Detected</string>
+    <string name="confidence">Confidence</string>
+    <string name="baseline_mode">Baseline Mode (No Pattern)</string>
+    <string name="pattern_mode">Pattern Test Mode</string>
+    <string name="add_pattern">Add Pattern</string>
+    <string name="add_persona">Add Persona</string>
+    <string name="export_results">Export Results</string>
+    <string name="exporting">Exporting…</string>
+    <string name="share_report">Share Report</string>
+
+    <!-- Results Screen -->
+    <string name="results_title">Test Results</string>
+    <string name="detection_rate">Detection Rate</string>
+    <string name="evasion_rate">Evasion Rate</string>
+    <string name="no_results">No test results yet</string>
+    <string name="delete_result">Delete</string>
+    <string name="grade">Grade</string>
+    <string name="avg_confidence">Avg Confidence</string>
+
+    <!-- Dialog -->
+    <string name="save_pattern">Save Current Frame as Pattern</string>
+    <string name="confirm_delete">Delete this test result?</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <!-- Settings -->
+    <string name="detector_models">Detector Models</string>
+    <string name="trials_per_test">Trials Per Test</string>
+    <string name="save_frames">Save Frames</string>
+    <string name="auto_export">Auto-Export Results</string>
+    <string name="camera_selection">Camera</string>
+    <string name="front_camera">Front Camera</string>
+    <string name="back_camera">Back Camera</string>
+
+    <!-- Permissions -->
+    <string name="camera_permission_title">Camera Permission Required</string>
+    <string name="camera_permission_message">Watcher needs camera access to detect faces and test adversarial patterns.</string>
+</resources>

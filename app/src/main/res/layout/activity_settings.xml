@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/btn_back_settings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="@drawable/round_button_bg"
+                android:contentDescription="Back"
+                android:scaleType="center"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings"
+                android:textSize="24sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:layout_gravity="center_vertical" />
+        </LinearLayout>
+
+        <!-- Detector Model Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/detector_models"
+            android:textSize="16sp"
+            android:textColor="@color/accent"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/radio_detector_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface_dark"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radio_detector_fast"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Fast (Performance Mode) — higher fps"
+                android:textColor="@color/on_surface"
+                android:padding="8dp" />
+
+            <RadioButton
+                android:id="@+id/radio_detector_accurate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Accurate (Contour + Landmark Mode)"
+                android:textColor="@color/on_surface"
+                android:padding="8dp" />
+        </RadioGroup>
+
+        <!-- Camera Selection -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/camera_selection"
+            android:textSize="16sp"
+            android:textColor="@color/accent"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/radio_camera_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface_dark"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radio_camera_back"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/back_camera"
+                android:textColor="@color/on_surface"
+                android:padding="8dp" />
+
+            <RadioButton
+                android:id="@+id/radio_camera_front"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/front_camera"
+                android:textColor="@color/on_surface"
+                android:padding="8dp" />
+        </RadioGroup>
+
+        <!-- Default Persona -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Default Persona Name"
+            android:textSize="16sp"
+            android:textColor="@color/accent"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_default_persona"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="default"
+            android:textColor="@color/white"
+            android:textColorHint="@color/on_background"
+            android:background="@color/surface_dark"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Trials Slider -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/trials_per_test"
+            android:textSize="16sp"
+            android:textColor="@color/accent"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/surface_dark"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <SeekBar
+                android:id="@+id/slider_trials"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="20"
+                android:progress="5" />
+
+            <TextView
+                android:id="@+id/tv_trials_value"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:text="50"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Toggles -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Options"
+            android:textSize="16sp"
+            android:textColor="@color/accent"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_dark"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/save_frames"
+                    android:textColor="@color/on_surface" />
+
+                <Switch
+                    android:id="@+id/switch_save_frames"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/auto_export"
+                    android:textColor="@color/on_surface" />
+
+                <Switch
+                    android:id="@+id/switch_auto_export"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/btn_save_settings"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/ok"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/accent"
+            android:textColor="@color/white"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</ScrollView>
