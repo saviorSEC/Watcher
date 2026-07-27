@@ -450,7 +450,9 @@ function startTest() {
   progress.value = 0;
 }
 
-function startBaseline() {
+async function startBaseline() {
+  // Restart camera for fresh live feed (matches pattern test behavior)
+  await startCamera(useFrontCamera);
   testPhase = 'baseline';
   testResults = [];
   testTrials = 0;
