@@ -392,6 +392,11 @@ function updateStatus(det) {
 }
 
 function drawCanvas(det) {
+  // Sync canvas resolution to current video frame dimensions
+  if (video.videoWidth && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+  }
   const w = canvas.width;
   const h = canvas.height;
 
@@ -450,9 +455,26 @@ function startTest() {
   progress.value = 0;
 }
 
+async function restartCameraQuietly() {
+  // Stop old stream
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+  // Fresh stream with same facing mode
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: useFrontCamera ? 'user' : 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+    audio: false
+  });
+  video.srcObject = stream;
+  await video.play();
+  video.setAttribute('playsinline', '');
+  // Resize canvas to match actual video dimensions
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+}
+
 async function startBaseline() {
-  // Restart camera for fresh live feed (matches pattern test behavior)
-  await startCamera(useFrontCamera);
+  await restartCameraQuietly();
   testPhase = 'baseline';
   testResults = [];
   testTrials = 0;
@@ -464,8 +486,7 @@ async function startBaseline() {
 }
 
 async function startPatternTest() {
-  // 🔧 Restart camera to flush any stale frame from the video element
-  await startCamera(useFrontCamera);
+  await restartCameraQuietly();
   testPhase = 'pattern';
   testResults = [];
   testTrials = 0;
