@@ -76,8 +76,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-api:2.14.0")
 
-    // OpenCV for pattern overlay and image processing
-    implementation("com.quickbirdstudios:opencv:4.9.0")
+    // Pattern overlay uses Android built-in Canvas API (no OpenCV needed)
 
     // Coroutines for async
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
