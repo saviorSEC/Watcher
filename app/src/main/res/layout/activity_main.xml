@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="👁️ Watcher"
+            android:text="Watcher"
             android:textSize="36sp"
             android:textColor="@color/white"
             android:textStyle="bold" />

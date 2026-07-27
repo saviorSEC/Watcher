@@ -162,7 +162,7 @@ tr:nth-child(odd) { background: $bg; }
 .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid $borderColor; font-size: 12px; color: #8B949E; text-align: center; }
 @media (max-width: 600px) { .metric-grid { grid-template-columns: 1fr; } }
 </style></head><body>
-<h1>👁️ Watcher — Pattern Test Report</h1>
+<h1>Watcher - Pattern Test Report</h1>
 
 <div class="card">
     <h2>Overall Grade</h2>

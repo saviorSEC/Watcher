@@ -1,4 +1,4 @@
-# Watcher 👁️ — Android App
+# Watcher - Android App
 
 > **Adversarial pattern field testing — right on your phone.**
 >
@@ -175,4 +175,4 @@ Open the HTML report directly in Chrome for full metrics with grading tables.
 
 Research & educational use. Built for testing adversarial patterns in authorized environments against on-device facial recognition.
 
-**Watcher** — *Your phone. Your patterns. Your data. No cloud.*
+**Watcher** - Your phone. Your patterns. Your data. No cloud.
