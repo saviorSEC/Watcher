@@ -1,0 +1,82 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Rename APK with version
+        run: |
+          VERSION=$(grep versionName app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          cp app/build/outputs/apk/debug/app-debug.apk Watcher-${VERSION}.apk
+
+      - name: Upload debug APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watcher-apk
+          path: Watcher-*.apk
+          retention-days: 30
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download built APK
+        uses: actions/download-artifact@v4
+        with:
+          name: watcher-apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Watcher ${{ github.ref_name }}
+          body: |
+            ## Watcher ${{ github.ref_name }}
+
+            ### Install
+            1. Download the APK file below
+            2. Open it on your Android phone and tap Install
+            3. If blocked: Settings > Security > Install unknown apps > enable for your file manager / browser
+
+            ### What's tested
+            - ML Kit on-device face detection
+            - Baseline vs pattern comparison
+            - HTML report export
+
+            ### Build from source
+            ```bash
+            git clone https://github.com/saviorSEC/Watcher.git
+            cd Watcher
+            ./gradlew assembleDebug
+            ```
+          files: Watcher-*.apk
+          generate_release_notes: true
