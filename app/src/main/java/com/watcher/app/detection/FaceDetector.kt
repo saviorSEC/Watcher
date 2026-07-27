@@ -4,21 +4,45 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceLandmark
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 /**
  * Wraps Google ML Kit Face Detection for on-device face detection.
  *
- * Runs directly on the phone — no internet, no server needed.
+ * Runs directly on the phone - no internet, no server needed.
  * Uses Google Play Services (pre-installed on most Android phones).
  */
 class FaceDetector {
 
     companion object {
         private const val TAG = "Watcher.FaceDetector"
+
+        fun defaultOptions(): FaceDetectorOptions {
+            return FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking()
+                .build()
+        }
+
+        fun accurateOptions(): FaceDetectorOptions {
+            return FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .enableTracking()
+                .setMinFaceSize(0.15f)
+                .build()
+        }
     }
 
     private val detector: com.google.mlkit.vision.face.FaceDetector
@@ -37,10 +61,9 @@ class FaceDetector {
         val image = InputImage.fromBitmap(bitmap, 0)
 
         val faces: List<Face> = try {
-            detector.process(image)
-                .addOnFailureListener { e ->
-                    Log.w(TAG, "Detection failed: ${e.message}")
-                }.await()
+            val task = detector.process(image)
+            // Block on the Task directly using Tasks.await (no coroutines-play-services needed)
+            Tasks.await(task, 30, TimeUnit.SECONDS)
         } catch (e: Exception) {
             Log.e(TAG, "Detection error", e)
             emptyList()
@@ -51,35 +74,35 @@ class FaceDetector {
         val results = faces.map { face ->
             val landmarks = mutableMapOf<Int, LandmarkPoint>()
             // Extract available landmarks
-            face.landmark(FaceLandmark.LEFT_EYE)?.let {
-                landmarks[FaceLandmark.LEFT_EYE] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.LEFT_EYE)?.let {
+                landmarks[FaceLandmark.LEFT_EYE] = it
             }
-            face.landmark(FaceLandmark.RIGHT_EYE)?.let {
-                landmarks[FaceLandmark.RIGHT_EYE] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.RIGHT_EYE)?.let {
+                landmarks[FaceLandmark.RIGHT_EYE] = it
             }
-            face.landmark(FaceLandmark.NOSE_BASE)?.let {
-                landmarks[FaceLandmark.NOSE_BASE] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.NOSE_BASE)?.let {
+                landmarks[FaceLandmark.NOSE_BASE] = it
             }
-            face.landmark(FaceLandmark.MOUTH_LEFT)?.let {
-                landmarks[FaceLandmark.MOUTH_LEFT] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.MOUTH_LEFT)?.let {
+                landmarks[FaceLandmark.MOUTH_LEFT] = it
             }
-            face.landmark(FaceLandmark.MOUTH_RIGHT)?.let {
-                landmarks[FaceLandmark.MOUTH_RIGHT] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.MOUTH_RIGHT)?.let {
+                landmarks[FaceLandmark.MOUTH_RIGHT] = it
             }
-            face.landmark(FaceLandmark.MOUTH_BOTTOM)?.let {
-                landmarks[FaceLandmark.MOUTH_BOTTOM] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.MOUTH_BOTTOM)?.let {
+                landmarks[FaceLandmark.MOUTH_BOTTOM] = it
             }
-            face.landmark(FaceLandmark.CHIN)?.let {
-                landmarks[FaceLandmark.CHIN] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.CHIN)?.let {
+                landmarks[FaceLandmark.CHIN] = it
             }
-            face.landmark(FaceLandmark.LEFT_EAR)?.let {
-                landmarks[FaceLandmark.LEFT_EAR] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.LEFT_EAR)?.let {
+                landmarks[FaceLandmark.LEFT_EAR] = it
             }
-            face.landmark(FaceLandmark.RIGHT_EAR)?.let {
-                landmarks[FaceLandmark.RIGHT_EAR] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.RIGHT_EAR)?.let {
+                landmarks[FaceLandmark.RIGHT_EAR] = it
             }
-            face.landmark(FaceLandmark.NOSE_TIP)?.let {
-                landmarks[FaceLandmark.NOSE_TIP] = LandmarkPoint(it.position.x, it.position.y, it.position.z)
+            extractLandmark(face, FaceLandmark.NOSE_TIP)?.let {
+                landmarks[FaceLandmark.NOSE_TIP] = it
             }
 
             SingleFaceResult(
@@ -101,6 +124,11 @@ class FaceDetector {
             detections = results,
             inferenceTimeMs = inferenceTimeMs
         )
+    }
+
+    private fun extractLandmark(face: Face, landmarkType: Int): LandmarkPoint? {
+        val lm = face.getLandmark(landmarkType)
+        return lm?.let { LandmarkPoint(it.position.x, it.position.y, it.position.z) }
     }
 
     /**
@@ -132,28 +160,5 @@ class FaceDetector {
     fun close() {
         detector.close()
         Log.i(TAG, "FaceDetector closed")
-    }
-
-    companion object {
-        fun defaultOptions(): FaceDetectorOptions {
-            return FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                .enableTracking()
-                .build()
-        }
-
-        fun accurateOptions(): FaceDetectorOptions {
-            return FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                .enableTracking()
-                .setMinFaceSize(0.15f)
-                .build()
-        }
     }
 }

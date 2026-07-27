@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         tvVersion = findViewById(R.id.tv_version)
         recentResultsRecycler = findViewById(R.id.recent_results_list)
 
-        tvVersion.text = "Watcher v${BuildConfig.VERSION_NAME}"
+        tvVersion.text = "Watcher v1.0.0"
 
         checkCameraPermission()
 

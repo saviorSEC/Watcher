@@ -71,6 +71,9 @@ dependencies {
     // ML Kit Face Detection (on-device, no internet required)
     implementation("com.google.mlkit:face-detection:16.1.6")
 
+    // Google Play Services Tasks (for Tasks.await in suspend functions)
+    implementation("com.google.android.gms:play-services-tasks:18.2.0")
+
     // TensorFlow Lite for FaceNet/ArcFace embeddings
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
