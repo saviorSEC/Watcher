@@ -44,12 +44,12 @@
         <activity
             android:name=".camera.CameraActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Watcher.Fullscreen" />
+            android:theme="@style/Theme.Watcher" />
 
         <activity
             android:name=".testing.TestRunActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Watcher.Fullscreen" />
+            android:theme="@style/Theme.Watcher" />
 
         <activity
             android:name=".results.ResultsActivity"
