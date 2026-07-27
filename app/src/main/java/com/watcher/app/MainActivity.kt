@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.watcher.app.camera.CameraActivity
 import com.watcher.app.results.ResultsActivity
@@ -16,16 +17,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<TextView>(R.id.tv_version).text = "Watcher v1.0.0"
+        findViewById<TextView>(R.id.tv_version).text = "Watcher v1.0.1-diagnostic"
 
         findViewById<Button>(R.id.btn_quick_scan).setOnClickListener {
-            startActivity(Intent(this, CameraActivity::class.java))
+            // DIAGNOSTIC: try launching Settings instead
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         findViewById<Button>(R.id.btn_start_test).setOnClickListener {
-            startActivity(Intent(this, TestRunActivity::class.java))
+            // DIAGNOSTIC: try launching Settings instead
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         findViewById<Button>(R.id.btn_view_results).setOnClickListener {
-            startActivity(Intent(this, ResultsActivity::class.java))
+            // DIAGNOSTIC: try launching Settings instead
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
         findViewById<Button>(R.id.btn_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
