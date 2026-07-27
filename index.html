@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Watcher</title>
+
+<!-- TensorFlow.js + MediaPipe Face Detection -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.21.0/dist/tf-core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.21.0/dist/tf-backend-webgl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection@1.0.3/dist/face-detection.min.js"></script>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+/* Video container */
+#video-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+#video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#video-container canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Status bar */
+#status-bar {
+  display: flex;
+  justify-content: space-around;
+  background: #161b22;
+  padding: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  border-bottom: 1px solid #30363d;
+}
+#status-bar span {
+  text-align: center;
+  flex: 1;
+}
+#status-bar .green { color: #00ff88; }
+#status-bar .red { color: #ff4444; }
+#status-bar .yellow { color: #cccc00; }
+
+/* HUD overlay on video */
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  z-index: 10;
+}
+.hud-item {
+  background: rgba(0,0,0,0.7);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #fff;
+}
+
+/* Bottom controls */
+#controls {
+  background: #161b22;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #30363d;
+}
+#controls .row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  max-width: 200px;
+}
+.btn-primary { background: #e94560; color: #fff; }
+.btn-secondary { background: #0f3460; color: #fff; }
+.btn-gray { background: #1c2333; color: #c9d1d9; border: 1px solid #30363d; }
+.btn-small { padding: 6px 12px; font-size: 12px; flex: 0; }
+button:disabled { opacity: 0.4; }
+
+/* Progress bar */
+#progress-container { display: none; width: 100%; }
+progress {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  border: none;
+  background: #1c2333;
+}
+progress::-webkit-progress-bar { background: #1c2333; border-radius: 4px; }
+progress::-webkit-progress-value { background: #e94560; border-radius: 4px; }
+
+/* Phase label */
+#phase-label {
+  text-align: center;
+  font-weight: bold;
+  padding: 4px;
+  font-size: 14px;
+}
+
+/* Results overlay */
+#results {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(13,17,23,0.95);
+  z-index: 100;
+  padding: 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#results.show { display: flex; }
+#results h2 { font-size: 48px; margin-bottom: 8px; }
+#results .grade-s { color: #ffd700; }
+#results .grade-a { color: #00cc00; }
+#results .grade-b { color: #66cc00; }
+#results .grade-c { color: #cccc00; }
+#results .grade-d { color: #cc6600; }
+#results .grade-f { color: #cc0000; }
+#results .stat { font-size: 14px; margin: 4px 0; color: #8b949e; }
+#results .stat strong { color: #c9d1d9; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Status bar -->
+  <div id="status-bar">
+    <span id="s-status" class="yellow">INITIALIZING</span>
+    <span id="s-faces">Faces: --</span>
+    <span id="s-conf">Conf: --</span>
+    <span id="s-fps">FPS: --</span>
+  </div>
+
+  <!-- Video container -->
+  <div id="video-container">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="canvas"></canvas>
+    <div id="hud"></div>
+  </div>
+
+  <!-- Phase label -->
+  <div id="phase-label"></div>
+
+  <!-- Progress -->
+  <div id="progress-container">
+    <progress id="progress" value="0" max="100"></progress>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <div class="row">
+      <button id="btn-scan" class="btn-primary">Quick Scan</button>
+      <button id="btn-test" class="btn-secondary">Start Test</button>
+      <button id="btn-flip" class="btn-gray btn-small">Flip</button>
+    </div>
+    <div class="row" id="test-controls" style="display:none">
+      <button id="btn-baseline" class="btn-secondary">Run Baseline</button>
+      <button id="btn-pattern" class="btn-primary" disabled>Run Pattern Test</button>
+      <button id="btn-cancel" class="btn-gray btn-small">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <h2 id="grade-display">--</h2>
+    <div id="grade-stat" class="stat">Grade: <strong id="grade-letter">--</strong></div>
+    <div class="stat">Evasion Rate: <strong id="stat-evasion">--</strong></div>
+    <div class="stat">Baseline DR: <strong id="stat-baseline">--</strong></div>
+    <div class="stat">Pattern DR: <strong id="stat-pattern">--</strong></div>
+    <div class="stat">Baseline Trials: <strong id="stat-baseline-n">0</strong></div>
+    <div class="stat">Pattern Trials: <strong id="stat-pattern-n">0</strong></div>
+    <button id="btn-done" class="btn-primary" style="margin-top:16px">Done</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Watcher - Browser-Based Facial Recognition Testing
+// ============================================================
+
+// --- State ---
+let detector = null;
+let stream = null;
+let useFrontCamera = false;
+let scanning = false;
+let animFrameId = null;
+let frameCount = 0;
+let fpsTime = 0;
+
+let mode = 'idle';  // idle | scanning | testing
+
+// Test state
+let testPhase = null;  // null | baseline | pattern
+let testResults = [];
+let testBaselineResults = [];
+let testTrials = 0;
+let testTarget = 50;
+let testPersona = '';
+
+// DOM refs
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const sStatus = document.getElementById('s-status');
+const sFaces = document.getElementById('s-faces');
+const sConf = document.getElementById('s-conf');
+const sFps = document.getElementById('s-fps');
+const hud = document.getElementById('hud');
+const phaseLabel = document.getElementById('phase-label');
+const progress = document.getElementById('progress');
+const progressContainer = document.getElementById('progress-container');
+const testControls = document.getElementById('test-controls');
+const resultsDiv = document.getElementById('results');
+
+// --- Face Detection ---
+async function initDetector() {
+  try {
+    await tf.ready();
+    const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
+    detector = await faceDetection.createDetector(model, {
+      runtime: 'mediapipe',
+      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection',
+      maxFaces: 3
+    });
+    sStatus.textContent = 'READY';
+    sStatus.className = 'green';
+    return true;
+  } catch (e) {
+    console.error('Detector init failed:', e);
+    sStatus.textContent = 'FAILED: ' + e.message;
+    sStatus.className = 'red';
+    return false;
+  }
+}
+
+// --- Camera ---
+async function startCamera(front = false) {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+  const constraints = {
+    video: {
+      facingMode: front ? 'user' : 'environment',
+      width: { ideal: 640 },
+      height: { ideal: 480 }
+    },
+    audio: false
+  };
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+    video.setAttribute('playsinline', '');
+    useFrontCamera = front;
+    return true;
+  } catch (e) {
+    sStatus.textContent = 'CAMERA FAILED';
+    sStatus.className = 'red';
+    return false;
+  }
+}
+
+function flipCamera() {
+  startCamera(!useFrontCamera);
+}
+
+// --- Detection Loop ---
+let lastDetection = { faces: [], conf: 0 };
+let faceBoxes = [];
+
+function startLoop() {
+  scanning = true;
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  fpsTime = performance.now();
+  frameCount = 0;
+  loop();
+}
+
+function stopLoop() {
+  scanning = false;
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+}
+
+async function loop() {
+  if (!scanning) return;
+  animFrameId = requestAnimationFrame(loop);
+
+  frameCount++;
+  const now = performance.now();
+  if (now - fpsTime > 1000) {
+    sFps.textContent = 'FPS: ' + frameCount;
+    frameCount = 0;
+    fpsTime = now;
+  }
+
+  if (video.readyState < 2) return;
+
+  try {
+    const faces = await detector.estimateFaces(video);
+    lastDetection = { faces, conf: 0 };
+
+    if (faces.length > 0) {
+      const confs = faces.map(f => (f.keypoints ? 1.0 : f.score || 1.0));
+      lastDetection.conf = confs.reduce((a,b) => Math.max(a,b), 0);
+    }
+
+    // Update UI
+    updateStatus(lastDetection);
+
+    // Record trial if testing
+    if (testPhase && mode === 'testing') {
+      recordTrial(lastDetection);
+    }
+
+    // Draw
+    drawCanvas(lastDetection);
+
+  } catch (e) {
+    // Detection error, skip frame
+  }
+}
+
+function updateStatus(det) {
+  const n = det.faces.length;
+  sFaces.textContent = 'Faces: ' + n;
+  sConf.textContent = 'Conf: ' + (det.conf > 0 ? det.conf.toFixed(2) : '--');
+
+  if (n > 0) {
+    sStatus.textContent = 'FACE DETECTED';
+    sStatus.className = 'green';
+  } else {
+    sStatus.textContent = 'NO FACE';
+    sStatus.className = 'red';
+  }
+}
+
+function drawCanvas(det) {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Draw face boxes
+  for (const face of det.faces) {
+    const box = face.box;
+    const x = (box.xMin / video.videoWidth) * w;
+    const y = (box.yMin / video.videoHeight) * h;
+    const bw = (box.width / video.videoWidth) * w;
+    const bh = (box.height / video.videoHeight) * h;
+
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, bw, bh);
+
+    // Label
+    const score = face.score || 1.0;
+    ctx.fillStyle = '#00ff88';
+    ctx.font = '14px monospace';
+    ctx.fillText(score.toFixed(2), x, y - 5);
+
+    // Keypoints
+    if (face.keypoints) {
+      for (const kp of face.keypoints) {
+        const kx = (kp.x / video.videoWidth) * w;
+        const ky = (kp.y / video.videoHeight) * h;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(kx, ky, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    faceBoxes = [{ ...face, x, y, bw, bh }];
+  }
+}
+
+// --- Testing ---
+function startTest() {
+  if (mode === 'testing') return;
+  mode = 'testing';
+  testPhase = null;
+  testResults = [];
+  testBaselineResults = [];
+  testTrials = 0;
+  testTarget = prompt('Trials per phase?', '50');
+  testTarget = parseInt(testTarget) || 50;
+  testPersona = prompt('Persona name (subject)?', 'default') || 'default';
+
+  document.getElementById('test-controls').style.display = 'flex';
+  phaseLabel.textContent = 'Ready for baseline';
+  progressContainer.style.display = 'block';
+  progress.max = testTarget;
+  progress.value = 0;
+}
+
+function startBaseline() {
+  testPhase = 'baseline';
+  testResults = [];
+  testTrials = 0;
+  progress.value = 0;
+  phaseLabel.textContent = 'BASELINE - Subject without garment';
+  phaseLabel.style.color = '#58a6ff';
+  document.getElementById('btn-baseline').disabled = true;
+}
+
+function startPatternTest() {
+  testPhase = 'pattern';
+  testResults = [];
+  testTrials = 0;
+  progress.value = 0;
+  phaseLabel.textContent = 'PATTERN TEST - Subject wearing garment';
+  phaseLabel.style.color = '#e94560';
+  document.getElementById('btn-pattern').disabled = true;
+}
+
+function recordTrial(det) {
+  if (!testPhase) return;
+  const detected = det.faces.length > 0;
+  const conf = det.conf || 0;
+
+  testResults.push({ detected, conf, time: Date.now() });
+  testTrials++;
+  progress.value = testTrials;
+
+  // Show trial count in HUD
+  hud.innerHTML = '<div class="hud-item">' + testPhase + ': ' + testTrials + '/' + testTarget + '</div>';
+
+  if (testTrials >= testTarget) {
+    finishPhase();
+  }
+}
+
+function finishPhase() {
+  const dr = testResults.filter(r => r.detected).length / testResults.length;
+  const confs = testResults.filter(r => r.detected).map(r => r.conf);
+  const mc = confs.length > 0 ? confs.reduce((a,b) => a+b, 0) / confs.length : 0;
+
+  hud.innerHTML = '';
+
+  if (testPhase === 'baseline') {
+    testBaselineResults = [...testResults];
+    phaseLabel.textContent = 'Baseline: DR=' + (dr * 100).toFixed(1) + '%  Conf=' + mc.toFixed(2);
+    phaseLabel.style.color = '#58a6ff';
+    testPhase = null;
+    document.getElementById('btn-baseline').disabled = false;
+    document.getElementById('btn-pattern').disabled = false;
+    alert('Baseline done. DR=' + (dr * 100).toFixed(1) + '%\nSubject puts on garment, then tap "Run Pattern Test".');
+  } else if (testPhase === 'pattern') {
+    // Compute evasion
+    const baselineDR = testBaselineResults.filter(r => r.detected).length / testBaselineResults.length || 0.001;
+    const patternDR = dr;
+    const evasion = 1 - (patternDR / baselineDR);
+    const grade = getGrade(evasion);
+
+    showResults({
+      evasion: Math.max(0, evasion),
+      baselineDR,
+      patternDR,
+      grade,
+      baselineN: testBaselineResults.length,
+      patternN: testResults.length
+    });
+  }
+}
+
+function getGrade(er) {
+  if (er > 0.95) return 'S';
+  if (er > 0.80) return 'A';
+  if (er > 0.60) return 'B';
+  if (er > 0.40) return 'C';
+  if (er > 0.20) return 'D';
+  return 'F';
+}
+
+function showResults(data) {
+  mode = 'idle';
+  testPhase = null;
+  document.getElementById('test-controls').style.display = 'none';
+
+  const gradeEl = document.getElementById('grade-display');
+  gradeEl.textContent = data.grade;
+  gradeEl.className = 'grade-' + data.grade.toLowerCase();
+
+  document.getElementById('grade-letter').textContent = data.grade;
+  document.getElementById('stat-evasion').textContent = (data.evasion * 100).toFixed(1) + '%';
+  document.getElementById('stat-baseline').textContent = (data.baselineDR * 100).toFixed(1) + '%';
+  document.getElementById('stat-pattern').textContent = (data.patternDR * 100).toFixed(1) + '%';
+  document.getElementById('stat-baseline-n').textContent = data.baselineN;
+  document.getElementById('stat-pattern-n').textContent = data.patternN;
+
+  resultsDiv.className = 'show';
+}
+
+function cancelTest() {
+  mode = 'idle';
+  testPhase = null;
+  testResults = [];
+  testBaselineResults = [];
+  testTrials = 0;
+  document.getElementById('test-controls').style.display = 'none';
+  phaseLabel.textContent = '';
+  progressContainer.style.display = 'none';
+  hud.innerHTML = '';
+}
+
+function exportResults() {
+  // Simple text export
+  const txt = document.getElementById('grade-letter').textContent + ' - ' +
+    document.getElementById('stat-evasion').textContent + ' evasion';
+  const blob = new Blob([txt], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'watcher_results.txt';
+  a.click();
+}
+
+// --- Init ---
+async function init() {
+  const ok = await initDetector();
+  if (!ok) return;
+
+  const cam = await startCamera(false);
+  if (!cam) {
+    sStatus.textContent = 'CAMERA PERMISSION DENIED';
+    sStatus.className = 'red';
+    return;
+  }
+
+  startLoop();
+
+  // Button handlers
+  document.getElementById('btn-scan').onclick = () => {
+    if (mode === 'idle' || mode === 'testing') {
+      mode = 'scanning';
+      sStatus.textContent = 'SCANNING';
+    }
+  };
+
+  document.getElementById('btn-test').onclick = startTest;
+  document.getElementById('btn-flip').onclick = flipCamera;
+  document.getElementById('btn-baseline').onclick = startBaseline;
+  document.getElementById('btn-pattern').onclick = startPatternTest;
+  document.getElementById('btn-cancel').onclick = cancelTest;
+  document.getElementById('btn-done').onclick = () => {
+    resultsDiv.className = '';
+    progressContainer.style.display = 'none';
+    phaseLabel.textContent = '';
+  };
+}
+
+init();
+</script>
+</body>
+</html>
