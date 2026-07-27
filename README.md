@@ -6,7 +6,7 @@ Browser-based facial detection testing for anti-AI adversarial garments.
 
 ## How to Test a Shirt
 
-1. Open the link above on your phone in Chrome
+1. Open the link above on your phone
 2. Grant camera permission
 3. Tap **Quick Scan** -- see real-time face detection with green boxes
 4. Tap **Start Test** -- enters structured test mode
