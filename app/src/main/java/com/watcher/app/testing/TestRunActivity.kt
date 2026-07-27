@@ -138,7 +138,14 @@ class TestRunActivity : AppCompatActivity() {
     }
 
     private fun initializeCore() {
-        faceDetector = FaceDetector(FaceDetector.accurateOptions())
+        try {
+            faceDetector = FaceDetector(FaceDetector.defaultOptions())
+        } catch (e: Exception) {
+            Log.e(TAG, "FaceDetector init failed", e)
+            Toast.makeText(this, "Face detection failed: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         try {
             embedder = FaceNetEmbedder(this)
         } catch (e: Exception) {
@@ -154,7 +161,13 @@ class TestRunActivity : AppCompatActivity() {
                 processTestFrame(bitmap)
             }
         }
-        cameraManager.startCamera(previewView, useFrontCamera = false)
+        try {
+            cameraManager.startCamera(previewView, useFrontCamera = false)
+        } catch (e: Exception) {
+            Log.e(TAG, "Camera start failed", e)
+            Toast.makeText(this, "Camera failed: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
 
     private fun startBaselinePhase() {
