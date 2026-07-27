@@ -92,17 +92,11 @@ class FaceDetector {
             extractLandmark(face, FaceLandmark.MOUTH_BOTTOM)?.let {
                 landmarks[FaceLandmark.MOUTH_BOTTOM] = it
             }
-            extractLandmark(face, FaceLandmark.CHIN)?.let {
-                landmarks[FaceLandmark.CHIN] = it
-            }
             extractLandmark(face, FaceLandmark.LEFT_EAR)?.let {
                 landmarks[FaceLandmark.LEFT_EAR] = it
             }
             extractLandmark(face, FaceLandmark.RIGHT_EAR)?.let {
                 landmarks[FaceLandmark.RIGHT_EAR] = it
-            }
-            extractLandmark(face, FaceLandmark.NOSE_TIP)?.let {
-                landmarks[FaceLandmark.NOSE_TIP] = it
             }
 
             SingleFaceResult(
@@ -128,7 +122,7 @@ class FaceDetector {
 
     private fun extractLandmark(face: Face, landmarkType: Int): LandmarkPoint? {
         val lm = face.getLandmark(landmarkType)
-        return lm?.let { LandmarkPoint(it.position.x, it.position.y, it.position.z) }
+        return lm?.let { LandmarkPoint(it.position.x, it.position.y, 0f) }
     }
 
     /**

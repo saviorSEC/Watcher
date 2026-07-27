@@ -82,7 +82,7 @@ class FaceNetEmbedder(private val context: Context) {
 
             // L2 normalize the embedding
             val embedding = output[0]
-            val norm = kotlin.math.sqrt(embedding.sumOf { it * it })
+            val norm = kotlin.math.sqrt(embedding.map { it.toDouble() * it.toDouble() }.sum()).toFloat()
             if (norm > 0) {
                 for (i in embedding.indices) {
                     embedding[i] /= norm

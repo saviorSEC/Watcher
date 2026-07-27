@@ -1,5 +1,6 @@
 package com.watcher.app.models
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.watcher.app.detection.DetectionResult
 import com.watcher.app.detection.FaceDetector
@@ -75,7 +76,11 @@ class TestSession(
                     face.boundingBox.height().coerceAtMost(frameToAnalyze.height - face.boundingBox.top)
                 )
                 val emb = embedder.getEmbedding(faceCrop)
-                embeddingNorm = emb?.let { sqrt(it.sumOf { v -> (v * v).toDouble() }).toFloat() }
+                embeddingNorm = emb?.let { arr ->
+                    var sum = 0.0
+                    for (v in arr) sum += v * v
+                    kotlin.math.sqrt(sum).toFloat()
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Embedding extraction failed for trial $currentTrial")
             }
@@ -170,6 +175,4 @@ class TestSession(
         results.clear()
         currentTrial = 0
     }
-
-    private fun sqrt(value: Double): Float = kotlin.math.sqrt(value).toFloat()
 }

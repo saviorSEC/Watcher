@@ -72,18 +72,18 @@ object MetricAggregator {
 
     private fun List<Double>.maxOrZero(): Double {
         if (isEmpty()) return 0.0
-        return max()
+        return maxOrNull() ?: 0.0
     }
 
     private fun List<Double>.minOrElse(default: Double): Double {
         if (isEmpty()) return default
-        return min()
+        return minOrNull() ?: default
     }
 
     private fun List<Double>.stdOrZero(): Double {
         if (size < 2) return 0.0
         val mean = averageOrZero()
-        val variance = sumOf { (it - mean) * (it - mean) } / (size - 1)
+        val variance = this.map { (it - mean) * (it - mean) }.sum() / (size - 1)
         return sqrt(variance)
     }
 }

@@ -71,9 +71,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecentResultsList() {
         resultsAdapter = ResultsAdapter(
-            onItemClick = { run ->
+            onItemClick = { file ->
                 val intent = Intent(this, ResultsActivity::class.java)
-                intent.putExtra("test_id", run.id)
+                intent.putExtra("test_id", file.nameWithoutExtension)
                 startActivity(intent)
             }
         )
