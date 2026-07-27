@@ -6,7 +6,9 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,7 +18,9 @@ import com.watcher.app.results.ResultsActivity
 import com.watcher.app.results.ResultsAdapter
 import com.watcher.app.settings.SettingsActivity
 import com.watcher.app.testing.TestRunActivity
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 
 /**
  * Main dashboard — entry point for the Watcher app.
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashReporter.install(this)
         setContentView(R.layout.activity_main)
 
         btnQuickScan = findViewById(R.id.btn_quick_scan)
@@ -65,6 +70,9 @@ class MainActivity : AppCompatActivity() {
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        val btnCrashLog = findViewById<Button>(R.id.btn_crash_log)
+        btnCrashLog.setOnClickListener { showCrashLog() }
 
         setupRecentResultsList()
     }
@@ -105,6 +113,25 @@ class MainActivity : AppCompatActivity() {
             btnStartTest.isEnabled = false
             btnQuickScan.text = "Camera Permission Required"
         }
+    }
+
+    private fun showCrashLog() {
+        val crashDir = File(filesDir, "Watcher/crashes")
+        if (!crashDir.exists() || crashDir.listFiles().isNullOrEmpty()) {
+            Toast.makeText(this, "No crash logs found", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val latest = crashDir.listFiles()!!.sortedByDescending { it.lastModified() }.first()
+        val text = latest.readText()
+        AlertDialog.Builder(this)
+            .setTitle("Crash Log")
+            .setMessage(text.take(2000))
+            .setPositiveButton("OK", null)
+            .setNeutralButton("Delete Logs") { _, _ ->
+                crashDir.listFiles()?.forEach { it.delete() }
+                Toast.makeText(this, "Logs deleted", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun checkCameraPermission() {

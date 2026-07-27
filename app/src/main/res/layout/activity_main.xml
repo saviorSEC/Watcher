@@ -87,7 +87,18 @@
         android:backgroundTint="@color/card_dark"
         android:textColor="@color/on_surface"
         app:cornerRadius="12dp"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btn_crash_log"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="View Crash Log"
+        android:textSize="12sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/transparent"
+        android:textColor="@color/on_background"
+        android:layout_marginBottom="16dp" />
 
     <!-- Recent Results Section -->
     <TextView
