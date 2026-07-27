@@ -461,7 +461,9 @@ function startBaseline() {
   document.getElementById('btn-baseline').disabled = true;
 }
 
-function startPatternTest() {
+async function startPatternTest() {
+  // 🔧 Restart camera to flush any stale frame from the video element
+  await startCamera(useFrontCamera);
   testPhase = 'pattern';
   testResults = [];
   testTrials = 0;
