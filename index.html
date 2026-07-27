@@ -235,6 +235,8 @@ let testBaselineResults = [];
 let testTrials = 0;
 let testTarget = 50;
 let testPersona = '';
+let testFrameCount = 0;
+const TEST_INTERVAL = 10; // record 1 in 10 frames (~6/sec, ~8s for 50 trials)
 
 // DOM refs
 const video = document.getElementById('video');
@@ -351,9 +353,13 @@ async function loop() {
     // Update UI
     updateStatus(lastDetection);
 
-    // Record trial if testing
+    // Record trial if testing (skip frames so trials are meaningfully spaced)
     if (testPhase && mode === 'testing') {
-      recordTrial(lastDetection);
+      testFrameCount++;
+      if (testFrameCount >= TEST_INTERVAL) {
+        testFrameCount = 0;
+        recordTrial(lastDetection);
+      }
     }
 
     // Draw
@@ -441,6 +447,7 @@ function startBaseline() {
   testPhase = 'baseline';
   testResults = [];
   testTrials = 0;
+  testFrameCount = 0;
   progress.value = 0;
   phaseLabel.textContent = 'BASELINE - Subject without garment';
   phaseLabel.style.color = '#58a6ff';
@@ -451,6 +458,7 @@ function startPatternTest() {
   testPhase = 'pattern';
   testResults = [];
   testTrials = 0;
+  testFrameCount = 0;
   progress.value = 0;
   phaseLabel.textContent = 'PATTERN TEST - Subject wearing garment';
   phaseLabel.style.color = '#e94560';
@@ -480,6 +488,7 @@ function finishPhase() {
   const mc = confs.length > 0 ? confs.reduce((a,b) => a+b, 0) / confs.length : 0;
 
   hud.innerHTML = '';
+  testFrameCount = 0; // reset frame counter for next phase
 
   if (testPhase === 'baseline') {
     testBaselineResults = [...testResults];
