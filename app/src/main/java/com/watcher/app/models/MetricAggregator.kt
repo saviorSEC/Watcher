@@ -12,16 +12,15 @@ object MetricAggregator {
         detectionResults: List<DetectionResult>,
         trials: Int
     ): AggregateMetrics {
-        val faceCounts = detectionResults.map { it.faceCount }
-        val confidences = detectionResults
+        val confidences: List<Double> = detectionResults
             .filter { it.faceCount > 0 }
             .flatMap { it.detections.map { d -> d.confidence.toDouble() } }
-        val inferenceTimes = detectionResults.map { it.inferenceTimeMs }
-        val bboxAreas = detectionResults
+        val inferenceTimes: List<Double> = detectionResults.map { it.inferenceTimeMs }
+        val bboxAreas: List<Double> = detectionResults
             .filter { it.faceCount > 0 }
-            .flatMap { r -> r.detections.map { d -> d.boundingBox.width() * d.boundingBox.height() } }
+            .flatMap { r -> r.detections.map { d -> (d.boundingBox.width() * d.boundingBox.height()).toDouble() } }
 
-        val detectionCount = faceCounts.count { it > 0 }
+        val detectionCount = detectionResults.count { it.faceCount > 0 }
         val detectionRate = if (trials > 0) detectionCount.toDouble() / trials else 0.0
 
         return AggregateMetrics(
@@ -29,8 +28,8 @@ object MetricAggregator {
             totalTrials = trials,
             detectionCount = detectionCount,
             meanConfidence = if (confidences.isEmpty()) 0.0 else confidences.sum() / confidences.size,
-            maxConfidence = if (confidences.isEmpty()) 0.0 else confidences.maxOrNull() ?: 0.0,
-            minConfidence = if (confidences.isEmpty()) 0.0 else confidences.minOrNull() ?: 0.0,
+            maxConfidence = confidences.maxOrNull() ?: 0.0,
+            minConfidence = confidences.minOrNull() ?: 0.0,
             meanInferenceTimeMs = if (inferenceTimes.isEmpty()) 0.0 else inferenceTimes.sum() / inferenceTimes.size,
             bboxAreaMean = if (bboxAreas.isEmpty()) 0.0 else bboxAreas.sum() / bboxAreas.size,
             bboxAreaStd = if (bboxAreas.size < 2) 0.0 else {
