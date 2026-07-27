@@ -1,103 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- Camera Preview -->
-    <androidx.camera.view.PreviewView
-        android:id="@+id/camera_preview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
-
-    <!-- Detection Overlay (boxes drawn here) -->
-    <View
-        android:id="@+id/detection_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <!-- Top Controls -->
-    <ImageButton
-        android:id="@+id/btn_back"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_close"
-        android:background="@drawable/round_button_bg"
-        android:contentDescription="Back"
-        android:scaleType="center"
-        app:tint="@color/white" />
-
-    <!-- Overlay Info Panel -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/tv_camera_message"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginTop="80dp"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:weightSum="4">
-
-        <TextView
-            android:id="@+id/tv_status"
-            style="@style/OverlayText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="INITIALIZING"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:background="@color/semi_transparent"
-            android:padding="8dp"
-            android:gravity="center" />
-
-        <TextView
-            android:id="@+id/tv_face_count"
-            style="@style/OverlayText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Faces: —"
-            android:background="@color/semi_transparent"
-            android:padding="8dp"
-            android:gravity="center" />
-
-        <TextView
-            android:id="@+id/tv_confidence"
-            style="@style/OverlayText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Conf: —"
-            android:background="@color/semi_transparent"
-            android:padding="8dp"
-            android:gravity="center" />
-
-        <TextView
-            android:id="@+id/tv_inference_time"
-            style="@style/OverlayText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="—ms"
-            android:background="@color/semi_transparent"
-            android:padding="8dp"
-            android:gravity="center" />
-    </LinearLayout>
-
-    <!-- Bottom Controls -->
-    <ImageButton
-        android:id="@+id/btn_flip_camera"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="40dp"
-        android:src="@drawable/ic_flip_camera"
-        android:background="@drawable/round_button_bg"
-        android:contentDescription="Flip Camera"
-        android:scaleType="center"
-        app:tint="@color/white" />
-
+        android:layout_gravity="center"
+        android:text="Camera starting..."
+        android:textColor="#FFFFFF"
+        android:textSize="18sp" />
 </FrameLayout>
