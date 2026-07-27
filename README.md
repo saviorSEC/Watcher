@@ -2,7 +2,7 @@
 
 **Open this on your phone:** https://saviorsec.github.io/Watcher/
 
-Browser-based facial recognition testing for anti-AI adversarial garments.
+Browser-based facial detection testing for anti-AI adversarial garments.
 
 ## How to Test a Shirt
 
