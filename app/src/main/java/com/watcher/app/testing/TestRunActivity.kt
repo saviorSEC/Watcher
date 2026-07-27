@@ -20,15 +20,6 @@ import com.watcher.app.export.ReportExporter
 import com.watcher.app.models.*
 import kotlinx.coroutines.*
 
-/**
- * Structured test session — runs N trials and compares baseline vs pattern.
- *
- * Flow:
- * 1. Configure session (persona name, trials, pattern)
- * 2. Run baseline (no pattern)
- * 3. Run pattern test (with shirt/garment pattern)
- * 4. Compare and report
- */
 class TestRunActivity : AppCompatActivity() {
 
     companion object {
@@ -36,340 +27,232 @@ class TestRunActivity : AppCompatActivity() {
         private const val DEFAULT_TRIALS = 50
     }
 
-    // UI
-    private lateinit var previewView: PreviewView
-    private lateinit var tvPhase: TextView
-    private lateinit var tvProgress: TextView
-    private lateinit var tvStatus: TextView
-    private lateinit var tvFaceCount: TextView
-    private lateinit var tvConfidence: TextView
-    private lateinit var tvTrialCount: TextView
-    private lateinit var progressBar: ProgressBar
-    private lateinit var btnStart: Button
-    private lateinit var btnSelectPattern: Button
-    private lateinit var btnFlipCamera: ImageButton
-    private lateinit var btnBack: ImageButton
-    private lateinit var tvPatternInfo: TextView
-    private lateinit var personaInput: EditText
-    private lateinit var trialCountInput: EditText
-    private lateinit var layoutConfig: View
-    private lateinit var layoutTestRunning: View
+    private var previewView: PreviewView? = null
+    private var tvPhase: TextView? = null
+    private var tvProgress: TextView? = null
+    private var tvStatus: TextView? = null
+    private var tvFaceCount: TextView? = null
+    private var tvConfidence: TextView? = null
+    private var tvTrialCount: TextView? = null
+    private var progressBar: ProgressBar? = null
+    private var btnStart: Button? = null
+    private var btnSelectPattern: Button? = null
+    private var btnFlipCamera: ImageButton? = null
+    private var btnBack: ImageButton? = null
+    private var tvPatternInfo: TextView? = null
+    private var personaInput: EditText? = null
+    private var trialCountInput: EditText? = null
+    private var layoutConfig: View? = null
+    private var layoutTestRunning: View? = null
 
-    // Core
-    private lateinit var cameraManager: CameraManager
-    private lateinit var faceDetector: FaceDetector
+    private var cameraManager: CameraManager? = null
+    private var faceDetector: FaceDetector? = null
     private var embedder: FaceNetEmbedder? = null
-    private lateinit var patternOverlay: PatternOverlay
-    private lateinit var testSession: TestSession
-    private lateinit var reportExporter: ReportExporter
+    private var patternOverlay: PatternOverlay? = null
+    private var testSession: TestSession? = null
+    private var reportExporter: ReportExporter? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
-    // State
     private var selectedPatternUri: Uri? = null
     private var baselineRun: TestRun? = null
     private var isRunningTest = false
     private var currentPhase = Phase.CONFIG
 
-    enum class Phase {
-        CONFIG,       // Setting up params
-        BASELINE,     // Running baseline (no pattern)
-        PATTERN_TEST, // Running with pattern
-        RESULTS       // Showing results
-    }
+    enum class Phase { CONFIG, BASELINE, PATTERN_TEST, RESULTS }
 
     private val patternPickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
             selectedPatternUri = it
-            val loaded = patternOverlay.loadPattern(contentResolver, it)
-            tvPatternInfo.text = if (loaded) {
-                "Pattern loaded ✓"
-            } else {
-                "Failed to load pattern"
+            patternOverlay?.let { po ->
+                if (po.loadPattern(contentResolver, it)) {
+                    tvPatternInfo?.text = "Pattern loaded"
+                    tvPatternInfo?.visibility = View.VISIBLE
+                }
             }
-            tvPatternInfo.visibility = View.VISIBLE
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_test_run)
-
-        bindViews()
-        initializeCore()
-
-        btnSelectPattern.setOnClickListener {
-            patternPickerLauncher.launch("image/*")
+        try {
+            setContentView(R.layout.activity_test_run)
+            Log.i(TAG, "Layout inflated")
+        } catch (e: Exception) {
+            Log.e(TAG, "Layout inflation failed", e)
+            showError("Layout error: ${e.message}")
+            return
         }
 
-        btnStart.setOnClickListener {
-            if (currentPhase == Phase.CONFIG) {
-                startBaselinePhase()
-            } else if (currentPhase == Phase.BASELINE) {
-                // Already running baseline, or completed
-            } else if (currentPhase == Phase.RESULTS) {
-                exportAndFinish()
-            }
+        try {
+            previewView = findViewById(R.id.test_camera_preview)
+            tvPhase = findViewById(R.id.tv_test_phase)
+            tvProgress = findViewById(R.id.tv_test_progress)
+            tvStatus = findViewById(R.id.tv_test_status)
+            tvFaceCount = findViewById(R.id.tv_test_face_count)
+            tvConfidence = findViewById(R.id.tv_test_confidence)
+            tvTrialCount = findViewById(R.id.tv_trial_count)
+            progressBar = findViewById(R.id.test_progress_bar)
+            btnStart = findViewById(R.id.btn_test_action)
+            btnSelectPattern = findViewById(R.id.btn_select_pattern)
+            btnFlipCamera = findViewById(R.id.btn_flip_camera)
+            btnBack = findViewById(R.id.btn_back)
+            tvPatternInfo = findViewById(R.id.tv_pattern_info)
+            personaInput = findViewById(R.id.input_persona_name)
+            trialCountInput = findViewById(R.id.input_trial_count)
+            layoutConfig = findViewById(R.id.layout_config)
+            layoutTestRunning = findViewById(R.id.layout_test_running)
+        } catch (e: Exception) {
+            Log.e(TAG, "findViewById failed", e)
+            showError("View error: ${e.message}")
+            return
         }
 
-        btnFlipCamera.setOnClickListener { cameraManager.flipCamera(previewView) }
-        btnBack.setOnClickListener { finish() }
-    }
-
-    private fun bindViews() {
-        previewView = findViewById(R.id.test_camera_preview)
-        tvPhase = findViewById(R.id.tv_test_phase)
-        tvProgress = findViewById(R.id.tv_test_progress)
-        tvStatus = findViewById(R.id.tv_test_status)
-        tvFaceCount = findViewById(R.id.tv_test_face_count)
-        tvConfidence = findViewById(R.id.tv_test_confidence)
-        tvTrialCount = findViewById(R.id.tv_trial_count)
-        progressBar = findViewById(R.id.test_progress_bar)
-        btnStart = findViewById(R.id.btn_test_action)
-        btnSelectPattern = findViewById(R.id.btn_select_pattern)
-        btnFlipCamera = findViewById(R.id.btn_flip_camera)
-        btnBack = findViewById(R.id.btn_back)
-        tvPatternInfo = findViewById(R.id.tv_pattern_info)
-        personaInput = findViewById(R.id.input_persona_name)
-        trialCountInput = findViewById(R.id.input_trial_count)
-        layoutConfig = findViewById(R.id.layout_config)
-        layoutTestRunning = findViewById(R.id.layout_test_running)
-    }
-
-    private fun initializeCore() {
         try {
             faceDetector = FaceDetector(FaceDetector.defaultOptions())
         } catch (e: Exception) {
             Log.e(TAG, "FaceDetector init failed", e)
-            Toast.makeText(this, "Face detection failed: ${e.message}", Toast.LENGTH_LONG).show()
-            finish()
+            showError("Face detection failed: ${e.message}")
             return
         }
-        try {
-            embedder = FaceNetEmbedder(this)
-        } catch (e: Exception) {
-            Log.w(TAG, "FaceNet not available")
-        }
+
+        try { embedder = FaceNetEmbedder(this) } catch (e: Exception) { Log.w(TAG, "FaceNet not available") }
         patternOverlay = PatternOverlay()
-        testSession = TestSession(faceDetector, embedder, patternOverlay)
+        testSession = TestSession(faceDetector!!, embedder, patternOverlay)
         reportExporter = ReportExporter(this)
 
-        cameraManager = CameraManager(this)
-        cameraManager.onFrame = { bitmap ->
-            if (isRunningTest) {
-                processTestFrame(bitmap)
-            }
-        }
         try {
-            cameraManager.startCamera(previewView, useFrontCamera = false)
+            cameraManager = CameraManager(this)
+            cameraManager?.onFrame = { bitmap ->
+                if (isRunningTest) { processTestFrame(bitmap) }
+            }
+            cameraManager?.startCamera(previewView!!, false)
         } catch (e: Exception) {
-            Log.e(TAG, "Camera start failed", e)
-            Toast.makeText(this, "Camera failed: ${e.message}", Toast.LENGTH_LONG).show()
-            finish()
+            Log.e(TAG, "Camera init failed", e)
+            showError("Camera failed: ${e.message}")
+            return
         }
+
+        btnSelectPattern?.setOnClickListener { patternPickerLauncher.launch("image/*") }
+        btnFlipCamera?.setOnClickListener { cameraManager?.flipCamera(previewView!!) }
+        btnBack?.setOnClickListener { finish() }
+        btnStart?.setOnClickListener { handleStartClick() }
     }
 
-    private fun startBaselinePhase() {
-        val persona = personaInput.text.toString().ifBlank { "default" }
-        val trials = trialCountInput.text.toString().toIntOrNull() ?: DEFAULT_TRIALS
+    private fun handleStartClick() {
+        if (currentPhase == Phase.CONFIG) {
+            val persona = personaInput?.text?.toString()?.ifBlank { "default" } ?: "default"
+            val trials = trialCountInput?.text?.toString()?.toIntOrNull() ?: DEFAULT_TRIALS
+            currentPhase = Phase.BASELINE
+            isRunningTest = true
 
-        currentPhase = Phase.BASELINE
-        isRunningTest = true
+            testSession?.configure(TestSession.SessionConfig(
+                personaName = persona, totalTrials = trials, isBaseline = true
+            ))
 
-        testSession.configure(TestSession.SessionConfig(
-            personaName = persona,
-            totalTrials = trials,
-            isBaseline = true,
-            patternFileName = null
-        ))
-
-        layoutConfig.visibility = View.GONE
-        layoutTestRunning.visibility = View.VISIBLE
-        tvPhase.text = "BASELINE — No Pattern"
-        tvPhase.setTextColor(Color.parseColor("#58A6FF"))
-        btnStart.text = "Running..."
-        btnStart.isEnabled = false
-        trialCountInput.setText("")
-
-        progressBar.max = trials
-        progressBar.progress = 0
-
-        Log.i(TAG, "Starting baseline: $persona, $trials trials")
+            layoutConfig?.visibility = View.GONE
+            layoutTestRunning?.visibility = View.VISIBLE
+            tvPhase?.text = "BASELINE"
+            tvPhase?.setTextColor(Color.parseColor("#58A6FF"))
+            btnStart?.text = "Running..."
+            btnStart?.isEnabled = false
+            progressBar?.max = trials
+            progressBar?.progress = 0
+            Log.i(TAG, "Baseline started: $persona, $trials trials")
+        }
     }
 
     private fun processTestFrame(bitmap: Bitmap) {
         scope.launch {
             try {
-                val trial = testSession.recordTrial(bitmap)
-
+                val trial = testSession?.recordTrial(bitmap) ?: return@launch
                 withContext(Dispatchers.Main) {
-                    updateUI(trial)
+                    tvTrialCount?.text = "Trial ${trial.trialNumber}/${testSession?.totalTrials}"
+                    tvStatus?.text = if (trial.faceDetected) "DETECTED" else "NOT DETECTED"
+                    tvStatus?.setTextColor(
+                        if (trial.faceDetected) Color.parseColor("#00FF88") else Color.parseColor("#FF4444")
+                    )
+                    tvFaceCount?.text = "Faces: ${trial.faceCount}"
+                    tvConfidence?.text = "Conf: ${"%.2f".format(trial.confidence)}"
+                    tvProgress?.text = "${"%.0f".format((testSession?.progress ?: 0f) * 100)}%"
+                    progressBar?.progress = trial.trialNumber
 
-                    if (testSession.isComplete) {
+                    if (testSession?.isComplete == true) {
                         onPhaseComplete()
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Frame processing error: ${e.message}")
+                Log.w(TAG, "Frame error: ${e.message}")
             }
         }
     }
 
-    private fun updateUI(trial: com.watcher.app.models.Trial) {
-        tvTrialCount.text = "Trial ${trial.trialNumber}/${testSession.totalTrials}"
-        tvStatus.text = if (trial.faceDetected) "DETECTED" else "NOT DETECTED"
-        tvStatus.setTextColor(
-            if (trial.faceDetected) Color.parseColor("#00FF88")
-            else Color.parseColor("#FF4444")
-        )
-        tvFaceCount.text = "Faces: ${trial.faceCount}"
-        tvConfidence.text = "Conf: ${"%.2f".format(trial.confidence)}"
-        tvProgress.text = "${"%.0f".format(testSession.progress * 100)}%"
-        progressBar.progress = trial.trialNumber
-    }
-
     private fun onPhaseComplete() {
+        isRunningTest = false
         if (currentPhase == Phase.BASELINE) {
-            // Baseline done — save and prompt for pattern test
-            baselineRun = testSession.buildTestRun()
-            baselineRun?.let { reportExporter.exportJson(it) }
-            Log.i(TAG, "Baseline complete: ${testSession.getAggregate().detectionRate}")
-
+            baselineRun = testSession?.buildTestRun()
+            baselineRun?.let { reportExporter?.exportJson(it) }
+            val dr = testSession?.getAggregate()?.detectionRate ?: 0.0
             AlertDialog.Builder(this)
                 .setTitle("Baseline Complete")
-                .setMessage("Detection Rate: ${"%.1f".format(testSession.getAggregate().detectionRate * 100)}%\n\nNow run the pattern test. Have the subject put on the shirt/pattern.")
+                .setMessage("Detection Rate: ${"%.1f".format(dr * 100)}%\n\nSubject can now put on the garment.")
                 .setPositiveButton("Start Pattern Test") { _, _ -> startPatternPhase() }
-                .setNegativeButton("Cancel") { _, _ -> finishTest() }
+                .setNegativeButton("Cancel") { _, _ -> finish() }
                 .setCancelable(false)
                 .show()
-
-        } else if (currentPhase == Phase.PATTERN_TEST) {
-            // Pattern test done — show results
-            val patternRun = testSession.buildTestRun()
-            val comparison = baselineRun?.let { baseline ->
-                val agg = MetricAggregator.compare(baseline.aggregate, patternRun.aggregate)
-                TestComparison(
-                    testId = patternRun.id,
-                    baseline = baseline,
-                    patternTest = patternRun,
-                    perDetector = mapOf("mlkit_face" to agg),
-                    overall = agg
-                )
-            }
-
-            tvPhase.text = "RESULTS"
-            tvPhase.setTextColor(Color.parseColor("#FFD700"))
-            btnStart.text = "Export Report"
-            btnStart.isEnabled = true
-            currentPhase = Phase.RESULTS
-            isRunningTest = false
-
-            if (comparison != null) {
-                reportExporter.exportComparisonJson(comparison)
-                reportExporter.exportHtmlReport(comparison)
-                showResultDialog(comparison)
-            }
         }
     }
 
     private fun startPatternPhase() {
         if (selectedPatternUri == null) {
-            // No pattern selected — offer to pick one or run without
             AlertDialog.Builder(this)
                 .setTitle("No Pattern Selected")
-                .setMessage("You can test with or without a pattern overlay.")
-                .setPositiveButton("Select Pattern") { _, _ ->
-                    patternPickerLauncher.launch("image/*")
-                }
-                .setNeutralButton("Test Without Pattern") { _, _ ->
-                    patternOverlay.clearPattern()
-                    doPatternPhase(null)
-                }
-                .setNegativeButton("Cancel") { _, _ -> finishTest() }
+                .setMessage("Test without a pattern image?")
+                .setPositiveButton("Select Pattern") { _, _ -> patternPickerLauncher.launch("image/*") }
+                .setNeutralButton("Test Without") { _, _ -> doPatternPhase(null) }
+                .setNegativeButton("Cancel") { _, _ -> finish() }
                 .show()
             return
         }
-
-        val patternFileName = selectedPatternUri?.lastPathSegment ?: "pattern"
-        val path = selectedPatternUri.toString()
-        patternOverlay.loadPattern(contentResolver, selectedPatternUri!!)
-        doPatternPhase(patternFileName)
+        val name = selectedPatternUri?.lastPathSegment ?: "pattern"
+        patternOverlay?.loadPattern(contentResolver, selectedPatternUri!!)
+        doPatternPhase(name)
     }
 
-    private fun doPatternPhase(patternFileName: String?) {
+    private fun doPatternPhase(name: String?) {
         currentPhase = Phase.PATTERN_TEST
         isRunningTest = true
-        testSession.reset()
-
-        val persona = personaInput.text.toString().ifBlank { "default" }
-        val trials = trialCountInput.text.toString().toIntOrNull() ?: DEFAULT_TRIALS
-
-        testSession.configure(TestSession.SessionConfig(
-            personaName = persona,
-            totalTrials = trials,
-            isBaseline = false,
-            patternFileName = patternFileName,
-            patternOverlayMode = "full_frame",
-            patternAlpha = 0.6f
+        testSession?.reset()
+        val persona = personaInput?.text?.toString()?.ifBlank { "default" } ?: "default"
+        val trials = trialCountInput?.text?.toString()?.toIntOrNull() ?: DEFAULT_TRIALS
+        testSession?.configure(TestSession.SessionConfig(
+            personaName = persona, totalTrials = trials, isBaseline = false,
+            patternFileName = name
         ))
-
-        tvPhase.text = "PATTERN TEST"
-        tvPhase.setTextColor(Color.parseColor("#E94560"))
-        progressBar.progress = 0
-        btnStart.text = "Running..."
-        btnStart.isEnabled = false
-
-        Log.i(TAG, "Starting pattern test: $persona, $trials trials, pattern=$patternFileName")
+        tvPhase?.text = "PATTERN TEST"
+        tvPhase?.setTextColor(Color.parseColor("#E94560"))
+        progressBar?.progress = 0
+        btnStart?.text = "Running..."
+        btnStart?.isEnabled = false
     }
 
-    private fun showResultDialog(comparison: TestComparison) {
-        val ev = comparison.overall
-        val grade = ev.grade
-        val gradeColor = when (grade) {
-            "S" -> "#FFD700"
-            "A" -> "#00CC00"
-            "B" -> "#66CC00"
-            "C" -> "#CCCC00"
-            "D" -> "#CC6600"
-            "F" -> "#CC0000"
-            else -> "#C9D1D9"
-        }
-
-        val message = """
-            Grade: $grade
-            
-            Evasion Rate: ${"%.1f".format(ev.evasionRate * 100)}%
-            Baseline DR: ${"%.1f".format(ev.baselineDr * 100)}%
-            Pattern Test DR: ${"%.1f".format(ev.testDr * 100)}%
-            Confidence Suppression: ${"%.1f".format(ev.confidenceSuppression * 100)}%
-        """.trimIndent()
-
-        AlertDialog.Builder(this)
-            .setTitle("Test Complete")
-            .setMessage(message)
-            .setPositiveButton("Export Report") { _, _ -> exportAndFinish() }
-            .setNegativeButton("Close") { _, _ -> finishTest() }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun exportAndFinish() {
-        Toast.makeText(this, "Report saved to Documents/Watcher/", Toast.LENGTH_LONG).show()
-        finish()
-    }
-
-    private fun finishTest() {
-        isRunningTest = false
-        currentPhase = Phase.RESULTS
-        finish()
+    private fun showError(msg: String) {
+        Log.e(TAG, "Fatal: $msg")
+        if (!isFinishing) {
+            AlertDialog.Builder(this)
+                .setTitle("Error")
+                .setMessage(msg)
+                .setPositiveButton("OK") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
+        } else { finish() }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
-        cameraManager.shutdown()
-        faceDetector.close()
+        cameraManager?.shutdown()
+        faceDetector?.close()
         embedder?.close()
     }
 }
