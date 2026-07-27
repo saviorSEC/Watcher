@@ -199,7 +199,7 @@ progress::-webkit-progress-value { background: #e94560; border-radius: 4px; }
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- Results overlay -->
   <div id="results">
     <h2 id="grade-display">--</h2>
     <div id="grade-stat" class="stat">Grade: <strong id="grade-letter">--</strong></div>
@@ -209,6 +209,13 @@ progress::-webkit-progress-value { background: #e94560; border-radius: 4px; }
     <div class="stat">Baseline Trials: <strong id="stat-baseline-n">0</strong></div>
     <div class="stat">Pattern Trials: <strong id="stat-pattern-n">0</strong></div>
     <button id="btn-done" class="btn-primary" style="margin-top:16px">Done</button>
+  </div>
+
+  <!-- Non-blocking notification overlay (replaces alert()) -->
+  <div id="notif-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(13,17,23,0.92);z-index:90;padding:24px;flex-direction:column;justify-content:center;align-items:center;">
+    <div id="notif-title" style="font-size:24px;font-weight:bold;margin-bottom:12px;color:#58a6ff;"></div>
+    <div id="notif-body" style="font-size:14px;color:#8b949e;margin-bottom:20px;text-align:center;"></div>
+    <button id="btn-notif-ok" class="btn-primary" style="max-width:120px;padding:8px 24px;">OK</button>
   </div>
 </div>
 
@@ -497,7 +504,7 @@ function finishPhase() {
     testPhase = null;
     document.getElementById('btn-baseline').disabled = false;
     document.getElementById('btn-pattern').disabled = false;
-    alert('Baseline done. DR=' + (dr * 100).toFixed(1) + '%\nSubject puts on garment, then tap "Run Pattern Test".');
+    showNotification('Baseline Complete', 'DR=' + (dr * 100).toFixed(1) + '%<br><br>Put on the garment, then tap <b>Run Pattern Test</b>');
   } else if (testPhase === 'pattern') {
     // Compute evasion
     const baselineDR = testBaselineResults.filter(r => r.detected).length / testBaselineResults.length || 0.001;
@@ -524,6 +531,18 @@ function getGrade(er) {
   if (er > 0.20) return 'D';
   return 'F';
 }
+
+// Non-blocking notification (replaces alert() — keeps camera alive)
+function showNotification(title, body) {
+  const overlay = document.getElementById('notif-overlay');
+  document.getElementById('notif-title').innerHTML = title;
+  document.getElementById('notif-body').innerHTML = body;
+  overlay.style.display = 'flex';
+}
+
+document.getElementById('btn-notif-ok').onclick = () => {
+  document.getElementById('notif-overlay').style.display = 'none';
+};
 
 function showResults(data) {
   mode = 'idle';
