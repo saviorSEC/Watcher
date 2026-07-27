@@ -38,11 +38,10 @@ android {
 
     buildFeatures {
         viewBinding = true
-        mlModelBinding = false
     }
 
-    aaptOptions {
-        noCompress("tflite")
+    androidResources {
+        noCompress += listOf("tflite")
     }
 }
 
@@ -77,7 +76,6 @@ dependencies {
     // TensorFlow Lite for FaceNet/ArcFace embeddings
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-api:2.14.0")
 
     // Pattern overlay uses Android built-in Canvas API (no OpenCV needed)
 

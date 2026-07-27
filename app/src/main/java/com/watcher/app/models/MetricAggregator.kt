@@ -28,12 +28,15 @@ object MetricAggregator {
             detectionRate = detectionRate,
             totalTrials = trials,
             detectionCount = detectionCount,
-            meanConfidence = confidences.averageOrZero(),
-            maxConfidence = confidences.maxOrZero(),
-            minConfidence = confidences.minOrElse(0.0),
-            meanInferenceTimeMs = inferenceTimes.averageOrZero(),
-            bboxAreaMean = bboxAreas.averageOrZero(),
-            bboxAreaStd = bboxAreas.stdOrZero(),
+            meanConfidence = if (confidences.isEmpty()) 0.0 else confidences.sum() / confidences.size,
+            maxConfidence = if (confidences.isEmpty()) 0.0 else confidences.maxOrNull() ?: 0.0,
+            minConfidence = if (confidences.isEmpty()) 0.0 else confidences.minOrNull() ?: 0.0,
+            meanInferenceTimeMs = if (inferenceTimes.isEmpty()) 0.0 else inferenceTimes.sum() / inferenceTimes.size,
+            bboxAreaMean = if (bboxAreas.isEmpty()) 0.0 else bboxAreas.sum() / bboxAreas.size,
+            bboxAreaStd = if (bboxAreas.size < 2) 0.0 else {
+                val mean = bboxAreas.sum() / bboxAreas.size
+                sqrt(bboxAreas.map { (it - mean) * (it - mean) }.sum() / (bboxAreas.size - 1))
+            },
             grade = AggregateMetrics.grade(1.0 - detectionRate)
         )
     }
@@ -63,27 +66,5 @@ object MetricAggregator {
             baselineConf = baseline.meanConfidence,
             testConf = test.meanConfidence
         )
-    }
-
-    private fun List<Double>.averageOrZero(): Double {
-        if (isEmpty()) return 0.0
-        return sum() / size
-    }
-
-    private fun List<Double>.maxOrZero(): Double {
-        if (isEmpty()) return 0.0
-        return maxOrNull() ?: 0.0
-    }
-
-    private fun List<Double>.minOrElse(default: Double): Double {
-        if (isEmpty()) return default
-        return minOrNull() ?: default
-    }
-
-    private fun List<Double>.stdOrZero(): Double {
-        if (size < 2) return 0.0
-        val mean = averageOrZero()
-        val variance = this.map { (it - mean) * (it - mean) }.sum() / (size - 1)
-        return sqrt(variance)
     }
 }
